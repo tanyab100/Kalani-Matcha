@@ -1,0 +1,108 @@
+/* Global styles for the matcha ordering app */
+/* Mobile-first, optimized for 390px screens */
+
+/* Box-sizing reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Touch target utility (Requirement 9.3) ─────────────────────────────── */
+/* Ensures all interactive elements meet the 44×44 CSS pixel minimum */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Global touch target enforcement for all interactive elements */
+button,
+a,
+[role="button"],
+input,
+select,
+textarea {
+  min-height: 44px;
+}
+
+button,
+a,
+[role="button"] {
+  min-width: 44px;
+}
+
+/* ── Single-column layout at ≤390px (Requirement 9.1) ───────────────────── */
+@media (max-width: 390px) {
+  /* Force all flex containers to column direction */
+  .flex-row,
+  [style*="flex-direction: row"],
+  [style*="flexDirection: row"] {
+    flex-direction: column !important;
+  }
+
+  /* Ensure all main content containers use full width */
+  .container,
+  .content-container,
+  [style*="max-width"] {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Single-column layout for the app root */
+  #root > * {
+    max-width: 100% !important;
+  }
+
+  /* Ensure inner content containers are full-width */
+  #root > * > * {
+    max-width: 100% !important;
+  }
+}
+
+/* ── Responsive container (Requirement 9.1) ─────────────────────────────── */
+/* Applied to the Layout wrapper to enforce single-column on small screens */
+.app-container {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+@media (max-width: 390px) {
+  .app-container {
+    max-width: 100%;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  /* Ensure flex children stack vertically */
+  .app-container * {
+    flex-shrink: 1;
+  }
+}
+
+/* ── Performance optimizations (Requirement 9.4) ────────────────────────── */
+/* Lazy-load images by default */
+img {
+  loading: lazy; /* declarative hint; also set loading="lazy" attribute in HTML */
+  max-width: 100%;
+  height: auto;
+}
+
+/* Reduce layout shifts */
+img[width][height] {
+  aspect-ratio: attr(width) / attr(height);
+}
+
+/* Smooth scrolling for better mobile UX */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Prevent horizontal overflow on mobile */
+body {
+  overflow-x: hidden;
+}

@@ -1,0 +1,376 @@
+# Implementation Plan: Matcha Ordering App
+
+## Overview
+
+TypeScript-based mobile-first web app for a local matcha business. Covers menu browsing, cart, checkout, payment (card + Venmo), order status, history/reorder, admin slot management, and auth.
+
+## Tasks
+
+- [x] 1. Project scaffolding and tooling
+  - [x] 1.1 Frontend app setup
+    - Initialize a React + TypeScript app
+    - Configure routing
+    - Add basic mobile-first layout structure
+    - Add shared theme, spacing, and typography tokens
+    - _Requirements: 9.1_
+  - [x] 1.2 Backend app setup
+    - Initialize Node.js + Express + TypeScript backend
+    - Add API routing structure
+    - Add environment variable support
+    - Add request validation and error handling middleware
+  - [x] 1.3 Database setup
+    - Connect PostgreSQL
+    - Add migration system
+    - Create base schema for: menu_items, customization_groups, customization_options, pickup_slots, customers, orders
+  - [x] 1.4 Shared developer tooling
+    - Configure linting and formatting
+    - Configure test runner
+    - Add fast-check for property tests
+    - Add basic CI workflow
+
+- [x] 2. Menu and customization
+  - [x] 2.1 Create menu database schema and seed data
+    - Implement migrations for menu items and customization tables
+    - Seed example matcha drinks, food items, and extras
+    - _Requirements: 2.1_
+  - [x] 2.2 Build menu API
+    - Implement `GET /menu`
+    - Return items groupable by category with customization groups and options
+    - _Requirements: 2.1, 2.2_
+  - [x] 2.3 Build menu UI
+    - Implement `MenuPage.tsx` with category filters
+    - Implement `MenuItemCard.tsx` with out-of-stock state
+    - _Requirements: 2.1, 2.3, 2.4_
+  - [x] 2.4 Build customization flow
+    - Implement `CustomizationModal.tsx`
+    - Render required and optional customization groups
+    - Update displayed item price in real time
+    - Validate required selections before add-to-cart
+    - _Requirements: 3.1, 3.2, 3.3, 3.4_
+  - [x] 2.5 Write property test for menu category grouping
+    - **Property 2: Menu category grouping**
+    - **Validates: Requirements 2.1**
+  - [x] 2.6 Write property test for item detail completeness
+    - **Property 3: Item detail completeness**
+    - **Validates: Requirements 2.2**
+  - [x] 2.7 Write property test for out-of-stock rejection
+    - **Property 4: Out-of-stock items cannot be added to cart**
+    - **Validates: Requirements 2.3**
+  - [x] 2.8 Write property test for category filter correctness
+    - **Property 5: Category filter correctness**
+    - **Validates: Requirements 2.4**
+  - [x] 2.9 Write property test for customization price calculation
+    - **Property 6: Customization price calculation**
+    - **Validates: Requirements 3.2**
+  - [x] 2.10 Write property test for mandatory customization validation
+    - **Property 7: Mandatory customization validation**
+    - **Validates: Requirements 3.3**
+
+- [x] 3. Cart
+  - [x] 3.1 Implement cart state
+    - Create `useCart.ts`
+    - Support add, remove, and update quantity operations
+    - Recalculate subtotal, tax, tip, and total on every mutation
+    - _Requirements: 4.1, 4.3, 4.4, 4.5_
+  - [x] 3.2 Add cart persistence
+    - Save cart to `sessionStorage` under key `matcha_cart`
+    - Load cart on app startup and restore after refresh
+    - Handle invalid stored cart data safely
+    - _Requirements: 4.6, 4.7_
+  - [x] 3.3 Build cart UI
+    - Implement `CartDrawer.tsx` and `CartSummary.tsx`
+    - Show line items with customizations, quantity, subtotal, tax, tip, and total
+    - _Requirements: 4.2, 4.5_
+  - [x] 3.4 Write property test for cart total invariant
+    - **Property 8: Cart total invariant**
+    - **Validates: Requirements 4.1, 4.3, 4.4**
+  - [x] 3.5 Write property test for cart line item rendering
+    - **Property 9: Cart line item rendering**
+    - **Validates: Requirements 4.2**
+  - [x] 3.6 Write property test for cart summary completeness
+    - **Property 10: Cart summary completeness**
+    - **Validates: Requirements 4.5**
+  - [x] 3.7 Write property test for cart sessionStorage round-trip
+    - **Property 11: Cart sessionStorage round-trip**
+    - **Validates: Requirements 4.6, 4.7**
+  - [x] 3.8 Write unit tests for cart add/remove/update behavior
+    - Test edge cases and error conditions
+    - _Requirements: 4.1, 4.3, 4.4_
+
+- [x] 4. Checkpoint — Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 5. Pickup slots and capacity
+  - [x] 5.1 Implement pickup slot schema
+    - Add `capacity` and `used_capacity` columns to pickup_slots
+    - Seed pickup slots for development
+    - Add store hours configuration
+    - _Requirements: 11.1, 5.3_
+  - [x] 5.2 Build pickup slot API
+    - Implement `GET /pickup-slots`
+    - Filter slots using: 10-minute prep rule, operating hours, remaining capacity
+    - _Requirements: 5.3, 5.4, 5.5_
+  - [x] 5.3 Implement slot capacity calculation
+    - Add logic to compute order capacity usage as sum of item quantities
+    - Reject orders that would exceed slot capacity
+    - _Requirements: 11.2, 11.4_
+  - [x] 5.4 Build slot picker UI
+    - Implement `TimeSlotPicker.tsx`
+    - Display available slots and prevent selection of invalid slots
+    - Handle stale slot `409` response
+    - _Requirements: 5.2, 5.4, 5.6_
+  - [x] 5.5 Write property test for valid pickup slot filter
+    - **Property 13: Valid pickup slot filter**
+    - **Validates: Requirements 5.3, 5.4, 5.5**
+  - [x] 5.6 Write property test for slot capacity enforcement
+    - **Property 22: Slot capacity enforcement**
+    - **Validates: Requirements 11.2, 11.4**
+  - [x] 5.7 Write property test for slot usage calculation
+    - **Property 23: Slot usage calculation**
+    - **Validates: Requirements 11.4**
+  - [x] 5.8 Write unit tests for stale slot conflict handling
+    - Test 409 response triggers re-selection prompt
+    - _Requirements: 5.6_
+
+- [x] 6. Checkout and tips
+  - [x] 6.1 Build checkout page
+    - Implement `CheckoutPage.tsx`
+    - Display order summary with all cart items and totals
+    - Block checkout when cart is empty and redirect to menu
+    - _Requirements: 5.1, 5.11_
+  - [x] 6.2 Implement tip selection
+    - Build `TipSelector.tsx` with preset tips (10%, 15%, 20%) and custom amount input
+    - Default tip to 0; update total in real time
+    - _Requirements: 10.1, 10.2, 10.3, 10.5, 10.6_
+  - [x] 6.3 Implement tax and total calculation
+    - Add configurable tax rate
+    - Compute subtotal, tax, tip, and total consistently on frontend and backend
+    - _Requirements: 5.7, 10.4_
+  - [x] 6.4 Write property test for checkout summary completeness
+    - **Property 12: Checkout summary completeness**
+    - **Validates: Requirements 5.1**
+  - [x] 6.5 Write property test for tip calculation correctness
+    - **Property 14b: Tip calculation correctness**
+    - **Validates: Requirements 10.3, 10.5, 10.6**
+  - [x] 6.6 Write property test for tax calculation correctness
+    - **Property 14: Tax calculation correctness**
+    - **Validates: Requirements 5.7**
+  - [x] 6.7 Write property test for empty cart blocking checkout
+    - **Property 16: Empty cart blocks checkout**
+    - **Validates: Requirements 5.11**
+  - [x] 6.8 Write unit tests for empty cart checkout block
+    - Test checkout button disabled state and redirect behavior
+    - _Requirements: 5.11_
+
+- [x] 7. Payments — card flow
+  - [x] 7.1 Integrate payment processor SDK
+    - Add Stripe (or chosen provider) SDK
+    - Configure hosted card fields
+    - _Requirements: 6.1, 6.4_
+  - [x] 7.2 Create payment intent endpoint
+    - Implement `POST /checkout/intent`
+    - Accept cart summary, selected slot, and idempotency key
+    - Revalidate cart totals and slot availability
+    - Return payment intent client secret
+    - _Requirements: 6.2, 6.5_
+  - [x] 7.3 Build payment form
+    - Implement `PaymentForm.tsx` with hosted card fields
+    - Show loading indicator during payment processing
+    - Show descriptive payment errors; preserve cart on failure
+    - _Requirements: 6.2, 6.3, 6.4_
+  - [x] 7.4 Write unit tests for payment error handling
+    - Test payment intent creation failure
+    - Test network timeout behavior with cart preservation
+    - Test retry behavior
+    - _Requirements: 6.3, 6.10_
+
+- [x] 8. Order creation and webhook flow
+  - [x] 8.1 Implement order schema and persistence
+    - Persist order snapshot, subtotal, tax, tip, total
+    - Store payment intent ID and idempotency key
+    - Set initial status to `received` for card orders
+    - _Requirements: 5.9, 6.6_
+  - [x] 8.2 Implement payment webhook
+    - Implement `POST /webhook/payment`
+    - Verify webhook signature
+    - Create order only after confirmed payment event
+    - _Requirements: 5.9, 6.6_
+  - [x] 8.3 Implement idempotent order creation
+    - Enforce unique `idempotency_key` constraint
+    - Return existing order on duplicate webhook or payment retry
+    - Prevent duplicate slot usage updates
+    - _Requirements: 6.5_
+  - [x] 8.4 Update slot usage on confirmed order
+    - Increment `used_capacity` within a database transaction
+    - Reject over-capacity confirmations safely
+    - _Requirements: 11.2, 11.4_
+  - [x] 8.5 Build order confirmation UI
+    - Implement `OrderConfirmation.tsx`
+    - Show order number, itemized summary, pickup time, and total
+    - _Requirements: 7.1_
+  - [x] 8.6 Write property test for order created on confirmed payment
+    - **Property 15: Order created on confirmed payment**
+    - **Validates: Requirements 5.9, 6.6**
+  - [x] 8.7 Write property test for idempotent order creation
+    - **Property 17: Idempotent order creation**
+    - **Validates: Requirements 6.5**
+  - [x] 8.8 Write property test for order confirmation rendering
+    - **Property 18: Order confirmation rendering**
+    - **Validates: Requirements 7.1**
+  - [x] 8.9 Write unit tests for webhook verification and integration
+    - Test webhook signature verification
+    - Integration test: payment success → order creation
+    - _Requirements: 5.9, 6.6_
+
+- [x] 9. Checkpoint — Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 10. Venmo payment flow
+  - [x] 10.1 Build VenmoPaymentButton component
+    - Implement `VenmoPaymentButton.tsx`
+    - Generate deep-link URL to store Venmo profile with order total pre-filled
+    - Display "Pay via Venmo" button that opens the Venmo app
+    - _Requirements: 6.7, 6.8_
+  - [x] 10.2 Create Venmo order with pending_payment status
+    - When Venmo is selected at checkout, create the order server-side with `status = 'pending_payment'`
+    - Display instructions to complete payment in the Venmo app
+    - _Requirements: 6.9_
+  - [x] 10.3 Add admin confirm-payment endpoint
+    - Implement `POST /admin/orders/:id/confirm-payment`
+    - Restrict to Store_Admin role
+    - Advance order status from `pending_payment` to `received`
+    - _Requirements: 6.10_
+  - [x] 10.4 Write property test for Venmo order status on creation
+    - **Property 24: Venmo order status on creation**
+    - **Validates: Requirements 6.9, 6.10**
+  - [x] 10.5 Write unit tests for Venmo flow
+    - Test order created with `pending_payment` status when Venmo is selected
+    - Test deep-link URL contains correct pre-filled amount
+    - Test Store_Admin confirm-payment advances status to `received`
+    - _Requirements: 6.8, 6.9, 6.10_
+
+- [x] 11. Order status
+  - [x] 11.1 Build order fetch endpoint
+    - Implement `GET /orders/:id`
+    - Return order details and current status
+    - _Requirements: 7.2_
+  - [x] 11.2 Build order status UI
+    - Implement `OrderStatusPage.tsx`
+    - Display statuses: Pending Payment (Venmo only), Received, Preparing, Ready for Pickup
+    - _Requirements: 7.2, 7.3_
+  - [x] 11.3 Implement status polling
+    - Build `useOrderStatus.ts`
+    - Poll backend and refresh status display automatically
+    - _Requirements: 7.2_
+  - [x] 11.4 Write unit tests for order status rendering and refresh
+    - Test all status values render correctly
+    - Integration test order status refresh flow
+    - _Requirements: 7.2, 7.3_
+
+- [x] 12. Authentication
+  - [x] 12.1 Implement customer auth backend
+    - Add customer registration and login
+    - Hash passwords securely
+    - Issue JWT or integrate OAuth provider
+    - _Requirements: 1.1, 1.2_
+  - [x] 12.2 Implement frontend auth flow
+    - Build `AuthModal.tsx`
+    - Support guest checkout path and sign-in before or during checkout
+    - _Requirements: 1.1, 1.2_
+  - [x] 12.3 Protect authenticated routes
+    - Restrict `GET /orders/history` to signed-in users; return 401 otherwise
+    - Intercept 401 on frontend and render `AuthModal`
+    - _Requirements: 1.3, 1.4_
+  - [x] 12.4 Write property test for order history access control
+    - **Property 1: Order history access control**
+    - **Validates: Requirements 1.3**
+  - [x] 12.5 Write unit tests for auth flows
+    - Test guest checkout allowed
+    - Test authenticated history access
+    - Test unauthenticated redirect to sign-in
+    - _Requirements: 1.1, 1.2, 1.3, 1.4_
+
+- [x] 13. Order history and reorder
+  - [x] 13.1 Implement order history endpoint
+    - Implement `GET /orders/history`
+    - Return customer orders sorted newest first
+    - _Requirements: 8.1_
+  - [x] 13.2 Build order history UI
+    - Implement `OrderHistoryPage.tsx`
+    - Show list of past orders with items, customizations, total, and date
+    - _Requirements: 8.1, 8.2_
+  - [x] 13.3 Implement reorder endpoint
+    - Implement `POST /orders/:id/reorder`
+    - Rebuild cart from prior order using current menu data
+    - Exclude unavailable items; flag stale customizations; use current prices
+    - _Requirements: 8.3, 8.4, 8.5, 8.6_
+  - [x] 13.4 Build reorder frontend flow
+    - Implement `ReorderButton.tsx`
+    - Load reorder payload into cart and redirect to cart
+    - Show warnings for unavailable items or stale customizations
+    - _Requirements: 8.3, 8.4, 8.6, 8.7_
+  - [x] 13.5 Write property test for order history sort order
+    - **Property 19: Order history sort order**
+    - **Validates: Requirements 8.1**
+  - [x] 13.6 Write property test for order history detail completeness
+    - **Property 20: Order history detail completeness**
+    - **Validates: Requirements 8.2**
+  - [x] 13.7 Write property test for reorder cart construction
+    - **Property 21: Reorder cart construction**
+    - **Validates: Requirements 8.3, 8.4, 8.5**
+  - [x] 13.8 Write unit tests for stale customization handling
+    - Test checkout blocked when stale customization present
+    - Test customer notification shown
+    - _Requirements: 8.6_
+
+- [x] 14. Admin slot capacity management
+  - [x] 14.1 Add admin authorization
+    - Define Store_Admin role
+    - Protect all `/admin/*` endpoints
+    - _Requirements: 11.3_
+  - [x] 14.2 Build admin slot capacity endpoints
+    - Implement `GET /admin/pickup-slots`
+    - Implement `PATCH /admin/pickup-slots/:id/capacity`
+    - Reject capacity updates for past slots
+    - _Requirements: 11.3_
+  - [x] 14.3 Build admin capacity UI
+    - Implement `SlotCapacityPage.tsx`
+    - Show slot time, capacity, and used capacity
+    - Allow capacity updates for future slots only
+    - _Requirements: 11.3_
+  - [x] 14.4 Write unit tests for admin slot capacity
+    - Test admin-only access enforcement
+    - Test past slot update rejection
+    - Test successful future slot capacity update
+    - _Requirements: 11.3_
+
+- [x] 15. Checkpoint — Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 16. Error handling, polish, and smoke tests
+  - [x] 16.1 Standardize API error handling
+    - Standardize error codes: `SLOT_UNAVAILABLE`, `SLOT_CAPACITY_EXCEEDED`, auth errors, payment errors
+    - _Requirements: 5.6, 5.10, 6.3_
+  - [x] 16.2 Performance and responsiveness
+    - Verify single-column layout at 390px viewport
+    - Ensure all touch targets are at least 44×44 CSS pixels
+    - Optimize key pages for mobile performance
+    - _Requirements: 9.1, 9.3, 9.4_
+  - [x] 16.3 Smoke tests
+    - Confirm no raw card data stored server-side
+    - Confirm payment method is configured in Payment Processor
+    - Run Lighthouse CI on menu and checkout pages (target score ≥ 80)
+    - _Requirements: 6.1, 9.2_
+  - [x] 16.4 End-to-end integration tests
+    - Full checkout flow: cart → time slot → payment intent → webhook → order confirmation
+    - Reorder flow: history → reorder → cart navigation
+    - Order status polling flow
+    - _Requirements: 5.9, 8.7_
+
+## Notes
+
+- Tasks marked with `*` are optional and can be skipped for a faster MVP
+- Each task references specific requirements for traceability
+- Checkpoints at tasks 4, 9, and 15 ensure incremental validation
+- Property tests validate universal correctness properties using fast-check (minimum 100 runs each)
+- Unit tests validate specific examples, error cases, and integration points
